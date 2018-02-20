@@ -1,0 +1,55 @@
+#
+# CATT - Control All The Things
+#
+# Includes the following goodness:
+#
+#   Consul.   UI:  http://<ip>:8500/ui
+#   dkron.    UI:  http://<ip>:8080/dashboard/
+#
+# dkron bits adapted from dkron Docker image itself
+#
+# todo:
+# gravitational teleport
+# web shell
+# proxy?
+# need to run as net=host
+
+version: '2'
+
+services:
+  #
+  # Run consul as a server, but with a quorem of just one node.   Definitely not failure
+  #   resilient!
+  #
+  consul:
+    image: consul
+    ports:
+      - "8600:8600"
+      - "8500:8500"
+      - "8300:8300"
+    hostname: node1
+    volumes:
+      - consul-data:/consul/data
+      - ./config/consul:/etc/consul.d
+    command: agent -server -client=0.0.0.0 -bootstrap-expect=1 -config-dir=/etc/consul.d -ui
+
+  dkron:
+    image: dkron/dkron
+    depends_on:
+      - consul
+    ports:
+      - "8080:8080"
+      - "8946:8946"
+    restart: always
+    command: agent -server -backend=consul -backend-machine=consul:8500 -join=dkron:8946
+
+# config in /etc/dkron
+
+# networks:
+#   default:
+#     external:
+#       name: controlling
+
+volumes:
+  consul-data:
+    external: true

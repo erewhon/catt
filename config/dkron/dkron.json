@@ -1,0 +1,5 @@
+{
+    "backend": "consul",
+    "backend-machine": "consul:8500",
+    "join": "dkron:8946"
+}
